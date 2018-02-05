@@ -1,0 +1,151 @@
+[
+  {
+    "id": "door1",
+    "type": "DoorSensor",
+    "name": "door1",
+    "door_ids": "new",
+    "door_state": "new",
+    "ed": "yes",
+    "reset": "yes",
+    "debug": "yes",
+    "errors": "no",
+    "x": 65,
+    "y": 88,
+    "z": 0,
+    "wires": [
+      [
+        "delay1:0"
+      ]
+    ]
+  },
+  {
+    "id": "motion1",
+    "type": "MotionSensor",
+    "name": "motion1",
+    "sensor_ids": "new",
+    "ed": "yes",
+    "reset": "yes",
+    "debug": "yes",
+    "errors": "no",
+    "x": 68,
+    "y": 255,
+    "z": 0,
+    "wires": [
+      [
+        "delay1:1"
+      ]
+    ]
+  },
+  {
+    "id": "delay1",
+    "type": "Delay",
+    "name": "delay1",
+    "delay": "new",
+    "timer_id": "new",
+    "ed": "yes",
+    "reset": "yes",
+    "debug": "yes",
+    "errors": "no",
+    "x": 234,
+    "y": 185,
+    "z": 0,
+    "wires": [
+      [
+        "calculate1:0"
+      ],
+      [
+        "armstate1:0"
+      ]
+    ]
+  },
+  {
+    "id": "armstate1",
+    "type": "ArmState",
+    "name": "armstate1",
+    "armstate": "disarmed armed armaway",
+    "ed": "yes",
+    "reset": "yes",
+    "debug": "yes",
+    "errors": "no",
+    "x": 366,
+    "y": 336,
+    "z": 0,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "calculate1",
+    "type": "Calculate",
+    "name": "calculate1",
+    "formula": "var a = 1;\nvar b = 2;\n\nvar x = a + b;",
+    "ed": "yes",
+    "reset": "yes",
+    "debug": "yes",
+    "errors": "no",
+    "x": 445,
+    "y": 181,
+    "z": 0,
+    "wires": [
+      [
+        "check_condition1:0"
+      ]
+    ]
+  },
+  {
+    "id": "check_condition1",
+    "type": "CheckCondition",
+    "name": "check_condition1",
+    "condition": "var c, d;\nif (a < b) {\n  c = d = a;\n}",
+    "ed": "yes",
+    "reset": "yes",
+    "debug": "yes",
+    "errors": "no",
+    "x": 623,
+    "y": 182,
+    "z": 0,
+    "wires": [
+      [
+        "light1:0"
+      ],
+      [
+        "notify1:0"
+      ]
+    ]
+  },
+  {
+    "id": "light1",
+    "type": "Light",
+    "name": "light1",
+    "light_ids": "new",
+    "light_state": "new",
+    "dim_level": "new",
+    "ed": "yes",
+    "reset": "yes",
+    "debug": "yes",
+    "errors": "no",
+    "x": 819,
+    "y": 97,
+    "z": 0,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "notify1",
+    "type": "Notify",
+    "name": "notify1",
+    "protocol": "email sms push x1 mms",
+    "ed": "yes",
+    "reset": "yes",
+    "debug": "yes",
+    "errors": "no",
+    "x": 819,
+    "y": 259,
+    "z": 0,
+    "wires": [
+      [],
+      []
+    ]
+  }
+]

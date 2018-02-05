@@ -1,0 +1,104 @@
+{
+  "class": "go.GraphLinksModel",
+  "nodeDataArray": [
+    {
+      "key": "P1",
+      "category": "Process",
+      "pos": "150 120",
+      "text": "Process"
+    },
+    {
+      "key": "P2",
+      "category": "Process",
+      "pos": "330 320",
+      "text": "Tank"
+    },
+    {
+      "key": "V1",
+      "category": "Valve",
+      "pos": "270 120",
+      "text": "V1"
+    },
+    {
+      "key": "P3",
+      "category": "Process",
+      "pos": "150 420",
+      "text": "Pump"
+    },
+    {
+      "key": "V2",
+      "category": "Valve",
+      "pos": "150 280",
+      "text": "VM",
+      "angle": 270
+    },
+    {
+      "key": "V3",
+      "category": "Valve",
+      "pos": "270 420",
+      "text": "V2",
+      "angle": 180
+    },
+    {
+      "key": "P4",
+      "category": "Process",
+      "pos": "450 140",
+      "text": "Reserve Tank"
+    },
+    {
+      "key": "V4",
+      "category": "Valve",
+      "pos": "390 60",
+      "text": "VA"
+    },
+    {
+      "key": "V5",
+      "category": "Valve",
+      "pos": "450 260",
+      "text": "VB",
+      "angle": 90
+    }
+  ],
+  "linkDataArray": [
+    {
+      "from": "P1",
+      "to": "V1"
+    },
+    {
+      "from": "P3",
+      "to": "V2"
+    },
+    {
+      "from": "V2",
+      "to": "P1"
+    },
+    {
+      "from": "P2",
+      "to": "V3"
+    },
+    {
+      "from": "V3",
+      "to": "P3"
+    },
+    {
+      "from": "V1",
+      "to": "V4"
+    },
+    {
+      "from": "V4",
+      "to": "P4"
+    },
+    {
+      "from": "V1",
+      "to": "P2"
+    },
+    {
+      "from": "P4",
+      "to": "V5"
+    },
+    {
+      "from": "V5",
+      "to": "P2"
+    }
+  ]
+}

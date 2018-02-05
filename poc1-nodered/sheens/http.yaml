@@ -1,0 +1,295 @@
+name: http
+doc: |-
+  Performs arbitrary http request triggered by in message. Response body, status and status
+  code are added to the message props before forwarding on out channel. If the request results
+  in error, the message is emiited on the error channel rather than the out channel.
+paramspecs:
+  template:
+    doc: car/cru template placeholder
+    primitiveType: objects
+    required: false
+  endpoint:
+    doc: endpoint
+    primitiveType: string
+    required: true
+  method:
+    doc: method
+    primitiveType: string
+    required: treu
+  headers:
+    doc: headers
+    primitiveType: object
+    required: false
+  debug:
+    doc: debug flag
+    primitiveType: bool
+    default: true
+    required: true
+  funcional_type:
+    doc: functional type of this component
+    primitiveType: string
+    required: true
+    default: "action"
+  flow_type:
+    doc: automation template id, for example notify_when_door_open
+    primitiveType: string
+    required: true
+  flow_id:
+    doc: automation instance id, for example aa7efeca-ae7c-4524-b570-af9d2e6ce751
+    primitiveType: string
+    required: true
+  component_type:
+    doc: component template id of this component
+    primitiveType: string
+    required: true
+  component_id:
+    doc: component instance id of this component; should use mid for this
+    primitiveType: string
+    required: true
+  in:
+    doc: in channel description
+    primitiveType: in
+    required: true
+  out:
+    doc: out channel description
+    primitiveType: out
+    required: false
+  error:
+    doc: error channel description
+    primitiveType: out
+    required: false
+parsepatterns: true
+patternsyntax: json
+nodes:
+  start:
+    action:
+      interpreter: goja
+      source: |-
+        _.bindings.data = {};
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  listen:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          { "message_id" : "?message_id", "payload" : "?payload", "props" : "?props", "flow_type" : "?flow_type", "flow_id" : "?flow_id", "component_type" : "?component_type", "component_id" : "?component_id", "component_out_label" : "?component_out_label", "component_in_label" : "?component_in_label", "path_id" : "?path_id" }
+        target: in
+      - pattern: |
+          { "body" : "?body", "headers" : "?headers", "request" : "?request", "status" : "?status", "statusCode" : "?statusCode"}
+        target: response
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "disable" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "disable", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: listen_enable
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "reset" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "reset", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: reset
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "debug" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "debug", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: debug
+  in:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "http", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        var payload = _.bindings["?payload"];
+        var props = _.bindings["?props"];
+        // prepare http request
+        var r = {};
+        r.request = {};
+        r.to = { "mid": "http" };
+        r.replyTo = _.props.mid;
+        r.request.url = _.bindings.endpoint;
+        //r.request.method = _.bindings.method;
+        //TODO: support POST body parameter
+        //r.request.body = JSON.stringify(_.bindings["?payload"]);
+        //r.request.timeout = 1000;
+        //TODO: support headers
+        //r.request.headers = {};
+        // send http request
+        // store critical message meta data
+        var m = {};
+        m.message_id = _.bindings["?message_id"];
+        m.payload = _.bindings["?payload"];
+        m.props = _.bindings["?props"];
+        //TODO: create decent hash over request data
+        var key = _.bindings.endpoint;
+        _.bindings.data[key] = m;
+        _.out(r);
+        // cleanup
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  response:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "http_response", "request": _.bindings["?request"], "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        // inject response data
+        var m = _.bindings.data[_.bindings["?request"].url];
+        m.props.body = _.bindings["?body"];
+        m.props.headers = _.bindings["?headers"];
+        m.props.request = _.bindings["?request"];
+        m.props.status = _.bindings["?status"];
+        m.props.statusCode = _.bindings["?statusCode"];
+        // forward message
+        var ok = true;
+        if (ok) {
+          for (var i = 0; i < _.bindings.out.target_mids.length; i++) {
+            // add flow meta data
+            var msg = {
+              "to" : { "mid": _.bindings.out.target_mids[i] },
+              "component_out_label" : "out"
+              "component_in_label" : _.bindings.out.component_in_labels[i],
+              "payload" : m.payload,
+              "props" : m.props,
+              "timestamp" : Date.now(),
+              "message_id" : m.message_id,
+              "flow_type" : _.bindings.flow_type,
+              "flow_id" : _.bindings.flow_id ,
+              "component_type" : "http",
+              "component_id" : _.props.mid,
+              "path_id" : _.bindings.out.path_id
+            };
+            // forward message
+            _.out(msg);
+          }
+        }
+        // send on error channel if there was an error
+        var hasError = false;
+        if (_.bindings["?statusCode"] >= 400) {
+          hasError = true;
+        }
+        if (hasError) {
+          m.props.error = _.bindings["?status"];
+          for (var i = 0; i < _.bindings.error.target_mids.length; i++) {
+            if (_.bindings.debug) {
+              _.log({ "log": "DEBUG", "action": "http_error", "statusCode" : _.bindings["?statusCode"], "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+            }
+            // add flow meta data
+            var msg = {
+              "to" : { "mid": _.bindings.error.target_mids[i] },
+              "component_out_label" : "error"
+              "component_in_label" : _.bindings.error.component_in_labels[i],
+              "payload" : m.payload,
+              "props" : m.props,
+              "timestamp" : Date.now(),
+              "message_id" : m.message_id,
+              "flow_type" : _.bindings.flow_type,
+              "flow_id" : _.bindings.flow_id ,
+              "component_type" : "http",
+              "component_id" : _.props.mid,
+              "path_id" : _.bindings.error.path_id
+            };
+            // forward message
+            _.out(msg);
+          }
+        }
+        // cleanup
+        delete _.bindings.data[_.bindings["?request"].url];
+        delete _.bindings["?body"];
+        delete _.bindings["?headers"];
+        delete _.bindings["?request"];
+        delete _.bindings["?status"];
+        delete _.bindings["?statusCode"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  listen_enable:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "enable" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "enable", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: listen
+  reset:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "reset", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        // delete all state information in bindings but retain initial bindings
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        // if other cleanup is necessary (timers, facts, etc.) do it here...
+        return _.bindings;
+    branching:
+      branches:
+      - target: start
+  debug:
+    action:
+      interpreter: goja
+      source: |-
+        _.bindings.debug = !_.bindings.debug;
+        _.log({ "log": "DEBUG", "action": "debug", "info": _.bindings.debug, "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen

@@ -1,0 +1,158 @@
+{
+  "tabs": [
+    {
+      "id": "1517795411117",
+      "name": "Main",
+      "icon": "fa-object-ungroup",
+      "linker": "main",
+      "index": 0
+    }
+  ],
+  "components": [
+    {
+      "component": "door",
+      "state": {
+        "text": "",
+        "color": ""
+      },
+      "x": 106,
+      "y": 148,
+      "tab": "1517795411117",
+      "connections": {
+        "0": [
+          {
+            "index": "0",
+            "id": "1517796234009"
+          }
+        ]
+      },
+      "id": "1517796228021"
+    },
+    {
+      "component": "motion",
+      "state": {
+        "text": "",
+        "color": "gray"
+      },
+      "x": 105,
+      "y": 261,
+      "tab": "1517795411117",
+      "connections": {
+        "0": [
+          {
+            "index": "1",
+            "id": "1517796234009"
+          }
+        ]
+      },
+      "id": "1517796912962"
+    },
+    {
+      "component": "delay",
+      "state": {
+        "text": "",
+        "color": ""
+      },
+      "x": 240,
+      "y": 216,
+      "tab": "1517795411117",
+      "connections": {
+        "0": [
+          {
+            "index": "0",
+            "id": "1517796237085"
+          }
+        ],
+        "1": [
+          {
+            "index": "0",
+            "id": "1517796556273"
+          }
+        ]
+      },
+      "id": "1517796234009"
+    },
+    {
+      "component": "calculate",
+      "state": {
+        "text": "",
+        "color": ""
+      },
+      "x": 370,
+      "y": 214,
+      "tab": "1517795411117",
+      "connections": {
+        "0": [
+          {
+            "index": "0",
+            "id": "1517796529229"
+          }
+        ]
+      },
+      "id": "1517796237085"
+    },
+    {
+      "component": "check_condition",
+      "state": {
+        "text": "",
+        "color": ""
+      },
+      "x": 495,
+      "y": 210,
+      "tab": "1517795411117",
+      "connections": {
+        "0": [
+          {
+            "index": "0",
+            "id": "1517796533918"
+          }
+        ],
+        "1": [
+          {
+            "index": "0",
+            "id": "1517796536145"
+          }
+        ]
+      },
+      "id": "1517796529229"
+    },
+    {
+      "component": "light",
+      "state": {
+        "text": "",
+        "color": ""
+      },
+      "x": 644,
+      "y": 142,
+      "tab": "1517795411117",
+      "connections": {},
+      "id": "1517796533918"
+    },
+    {
+      "component": "notify",
+      "state": {
+        "text": "",
+        "color": ""
+      },
+      "x": 651,
+      "y": 252,
+      "tab": "1517795411117",
+      "connections": {},
+      "id": "1517796536145"
+    },
+    {
+      "component": "armstate",
+      "state": {
+        "text": "",
+        "color": ""
+      },
+      "x": 372,
+      "y": 348,
+      "tab": "1517795411117",
+      "connections": {},
+      "id": "1517796556273"
+    }
+  ],
+  "version": 411,
+  "variables": ""
+}

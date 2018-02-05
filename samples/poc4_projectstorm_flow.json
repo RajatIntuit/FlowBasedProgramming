@@ -1,0 +1,79 @@
+[{
+  "id": "test-uid-2142",
+  "offsetX": 0,
+  "offsetY": 0,
+  "zoom": 100,
+  "gridSize": 0,
+  "links": [
+    {
+      "id": "test-uid-2147",
+      "type": "default",
+      "selected": false,
+      "source": "test-uid-2143",
+      "sourcePort": "test-uid-2144",
+      "target": "test-uid-2145",
+      "targetPort": "test-uid-2146",
+      "points": [
+        {
+          "id": "test-uid-2148",
+          "selected": false,
+          "x": 139.96665954589844,
+          "y": 133.14999389648438
+        },
+        {
+          "id": "test-uid-2149",
+          "selected": false,
+          "x": 409.5,
+          "y": 133.14999389648438
+        }
+      ],
+      "extras": {}
+    }
+  ],
+  "nodes": [
+    {
+      "id": "test-uid-2143",
+      "type": "default",
+      "selected": false,
+      "x": 100,
+      "y": 100,
+      "extras": {},
+      "ports": [
+        {
+          "id": "test-uid-2144",
+          "type": "default",
+          "selected": false,
+          "name": "out-1",
+          "parentNode": "test-uid-2143",
+          "links": [ "test-uid-2147" ],
+          "in": false,
+          "label": "Out"
+        }
+      ],
+      "name": "Node 1",
+      "color": "rgb(0,192,255)"
+    },
+    {
+      "id": "test-uid-2145",
+      "type": "default",
+      "selected": false,
+      "x": 400,
+      "y": 100,
+      "extras": {},
+      "ports": [
+        {
+          "id": "test-uid-2146",
+          "type": "default",
+          "selected": false,
+          "name": "in-1",
+          "parentNode": "test-uid-2145",
+          "links": [ "test-uid-2147" ],
+          "in": true,
+          "label": "IN"
+        }
+      ],
+      "name": "Node 2",
+      "color": "rgb(192,255,0)"
+    }
+  ]
+}]

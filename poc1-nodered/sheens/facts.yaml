@@ -1,0 +1,127 @@
+name: facts
+doc: |-
+  A machine that maintains state. You might call it a state state machine.
+paramspecs:
+  debug:
+    doc: debug flag
+    primitiveType: bool
+    default: true
+patternsyntax: json
+nodes:
+  start:
+    action:
+      interpreter: goja
+      source: |-
+        _.bindings.facts = {};
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  listen:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          {"fact": "set", "fkey": "?fkey", "fvalue": "?fvalue"}
+        target: setfact
+      - pattern: |
+          {"fact": "delete", "fkey": "?fkey"}
+        target: deletefact
+      - pattern: |
+          {"fact": "get", "fkey": "?fkey", "respondTo": "?respondTo", "payload": "?payload", "props": "?props", "message_id" : "?message_id"}
+        target: getfact
+  setfact:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "fact": "set", "key": _.bindings["?fkey"], "value": _.bindings["?fvalue"]});
+        }
+        _.bindings.facts[_.bindings["?fkey"]] = _.bindings["?fvalue"];
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "fact": "set", "key": _.bindings["?fkey"], "value": _.bindings["?fvalue"]});
+        }
+        delete _.bindings["?fkey"];
+        delete _.bindings["?fvalue"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  deletefact:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "fact": "delete", "key": _.bindings["?fkey"]});
+        }
+        if (_.bindings.facts[_.bindings["?fkey"]]) {
+          delete _.bindings.facts[_.bindings["?fkey"]];
+        }
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "fact": "delete", "key": _.bindings["?fkey"]});
+        }
+        delete _.bindings["?fkey"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  getfact:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "fact": "get", "key": _.bindings["?fkey"]});
+        }
+        var res = {};
+        res.fact = "result";
+        res.fkey = _.bindings["?fkey"];
+        //TODO: if response mid is missing we shouldn't even send the fact back
+        if (_.bindings["?respondTo"]) {
+          res.to = { "mid": _.bindings["?respondTo"] };
+        }
+        res.message_id = _.bindings["?message_id"];
+        res.payload = _.bindings["?payload"];
+        res.props = _.bindings["?props"];
+        if (_.bindings.facts[_.bindings["?fkey"]]) {
+          res.fvalue = _.bindings.facts[_.bindings["?fkey"]];
+          res.present = true;
+        } else {
+          res.fvalue = ""
+          res.present = false;
+        }
+        _.out(res);
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "fact": "get", "res": res, "key": _.bindings["?fkey"]});
+        }
+        delete _.bindings["?fkey"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        delete _.bindings["?respondTo"];
+        delete _.bindings["?message_id"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  reset:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "reset", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        // delete all state information in bindings but retain initial bindings
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        // if other cleanup is necessary (timers, facts, etc.) do it here...
+        return _.bindings;
+    branching:
+      branches:
+      - target: start

@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<!-- vim: set ts=4: -->
+<html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!--
+  Modified from original Node-Red source, for audio system visualization
+
+  Copyright 2013 IBM Corp.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<head>
+<title>Flow Design Tool for Xfinity Gears</title>
+<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<link href="jquery/css/smoothness/jquery-ui-1.10.3.custom.min.css" rel="stylesheet" media="screen">
+<link rel="stylesheet" type="text/css" href="orion/built-editor.css"/>
+<link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" href="style.css">
+<style>
+table.doc {border-spacing:3px; border-collapse:separate; font-size: 80%}
+tr.top {background-color:#C0C0C0}
+tr.odd {background-color:#F0F0F0}
+tr.even {background-color:#E0E0E0}
+p.func {padding-bottom:0; margin:0px}
+p.desc {padding-left:2em; margin:0px; padding-top:0.2em; padding-bottom:0.8em; font-size:0.75em}
+p.exam {padding-left:2em; text-indent:-1.2em; margin:0px; padding-top:0; padding-bottom:0.5em; font-size:0.75em; font-weight:bold}
+pre.desc {padding-left:3em; margin:0px; padding-top:0em; padding-bottom:0.8em; font-size:0.75em;
+	background-color:#FFFFFF; border:0px; line-height:100%;
+}
+span.indent {padding-left:2em}
+span.literal {color: #006699}
+span.comment {color: #777755}
+span.keyword {color: #cc6600}
+span.function {color: #996600}
+span.mainfunction {color: #993300; font-weight: bolder}
+</style>
+</head>
+<body spellcheck="false">
+<div class="navbar navbar-inverse navbar-fixed-top">
+	<div class="navbar-inner">
+		<div class="container-fluid">
+			<span class="brand">Flow Design Tool for <a href="https://s3-us-west-2.amazonaws.com/xasdoc/components.html" target="_blank">Xfinity Gears</a></span>
+			<div class="btn-group pull-right">
+				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i> <span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li><a id="btn-sidebar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Sidebar</a></li>
+					<li class="divider"></li>
+					<!-- <li><a id="btn-node-status" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-info-sign"></i> Node Status</a></li>
+					<li class="divider"></li>
+-->
+					<!--
+<li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="icon-edit"></i> Import from...</a>
+						<ul class="dropdown-menu">
+							<li><a id="btn-import" tabindex="-1" href="#"><i class="icon-edit"></i> Clipboard...</a></li>
+							<li id="flow-menu-parent" class="dropdown-submenu pull-left">
+								<a tabindex="-1" href="#"><i class="icon-book"></i> Library</a>
+								<ul class="dropdown-menu"></ul>
+							</li>
+						</ul>
+					</li>
+					<li id="li-menu-export" class="dropdown-submenu disabled pull-left"><a tabindex="-1" href="#"><i class="icon-share"></i> Export to...</a>
+						<ul class="dropdown-menu">
+							<li id="li-menu-export-clipboard" class="disabled"><a id="btn-export-clipboard" tabindex="-1" href="#"><i class="icon-share"></i> Clipboard...</a></li>
+							<li id="li-menu-export-library" class="disabled"><a id="btn-export-library" tabindex="-1" href="#"><i class="icon-book"></i> Library...</a></li>
+						</ul>
+					</li>
+					<li class="divider"></li>
+-->
+					<!--
+ <li><a id="btn-config-nodes" tabindex="-1" href="#"><i class="icon-th-list"></i> Configuration nodes...</a></li>
+					<li class="divider"></li>
+-->
+					<!--
+<li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="icon-th-large"></i> Workspaces</a>
+						<ul id="workspace-menu-list" class="dropdown-menu">
+							<li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
+							<li><a id="btn-workspace-edit" tabindex="-1" href="#"><i class="icon-edit"></i> Rename</a></li>
+							<li><a id="btn-workspace-delete" tabindex="-1" href="#"><i class="icon-minus"></i> Delete</a></li>
+							<li class="divider"></li>
+						</ul>
+					</li>
+					<li class="divider"></li>-->
+					<li><a id="btn-keyboard-shortcuts" tabindex="-1" href="#"><i class="icon-question-sign"></i> Keyboard Shortcuts</a></li>
+					<li><a id="btn-help" tabindex="-1" href="http://node-red.github.io/docs" target="_blank"><i class="icon-question-sign"></i> Help...</a></li>
+				</ul>
+			</div>
+			<div class="btn-group pull-left">
+				<a id="btn-deploy" class="btn action-deploy disabled" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Export</a>
+				<a id="btn-import" class="btn action-import disabled" href="#"><i id="btn-icn-download" class="icon-download"></i>Import</a>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="main-container" class="sidebar-closed">
+	<div id="palette">
+		<img src="img/spin.svg" class="palette-spinner"/>
+		<div id="palette-container" class="palette-scroll">
+		</div>
+		<div id="palette-search">
+			<i class="icon-search"></i><input id="palette-search-input" type="text" placeholder="filter"><a href="#" id="palette-search-clear"><i class="icon-remove"></i></a></input>
+		</div>
+	</div><!-- /palette -->
+
+	<div id="workspace">
+		<ul id="workspace-tabs"></ul>
+		<!--<div id="workspace-add-tab"><a id="btn-workspace-add-tab" href="#"><i class="icon-plus"></i></a></div>-->
+		<div id="chart"></div>
+		<div id="workspace-toolbar">
+			<div class="btn-group">
+				<a class="btn btn-small" href="#"><i class="icon-zoom-out"></i></a>
+				<a class="btn btn-small" href="#"><i class="icon-th"></i></a>
+				<a class="btn btn-small" href="#"><i class="icon-zoom-in"></i></a>
+			</div>
+		</div>
+	</div>
+
+	<div id="chart-zoom-controls">
+		<div class="btn-group">
+			<a class="btn btn-mini" id="btn-zoom-out" href="#"><i class="icon-zoom-out"></i></a>
+			<a class="btn btn-mini" id="btn-zoom-zero" href="#"><i class="icon-th"></i></a>
+			<a class="btn btn-mini" id="btn-zoom-in" href="#"><i class="icon-zoom-in"></i></a>
+		</div>
+	</div>
+
+	<div id="sidebar">
+		<ul id="sidebar-tabs"></ul>
+		<div id="sidebar-content"></div>
+	</div>
+
+	<div id="sidebar-separator"></div>
+
+</div>
+
+<div id="notifications"></div>
+<div id="dropTarget"><div>Drop the flow here</div></div>
+
+<div id="dialog" class="hide"><form id="dialog-form" class="form-horizontal"></form></div>
+<div id="node-config-dialog" class="hide"><form id="dialog-config-form" class="form-horizontal"></form><div class="form-tips" id="node-config-dialog-user-count"></div></div>
+
+<div id="node-dialog-confirm-deploy" class="hide">
+	<form class="form-horizontal">
+		<div id="node-dialog-confirm-deploy-config" style="text-align: center; padding-top: 30px;">
+			Some of the nodes are not properly configured. Are you sure you want to deploy?
+		</div>
+		<div id="node-dialog-confirm-deploy-unknown" style="text-align: center; padding-top: 10px;">
+			The workspace contains some unknown node types:
+			<ul style="width: 300px; margin: auto; text-align: left;" id="node-dialog-confirm-deploy-unknown-list"></ul>
+			Are you sure you want to deploy?
+		</div>
+	</form>
+</div>
+
+<div id="node-dialog-error-deploy" class="hide">
+	<form class="form-horizontal">
+		<div id="node-dialog-error-deploy-noio" style="text-align: center; padding-top: 10px;">
+			<p>The workspace contains no input/output nodes!</p>
+			<p>You need an input or an output to export the data!</p>
+			<p>Without such a input/output function the exported
+			code will not run properly!</p>
+		</div>
+	</form>
+</div>
+
+<div id="node-help" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="node-help-label" aria-hidden="true">
+  <div class="modal-header">
+	<h5 id="node-help-label">Keyboard Shortcuts <span style="float: right;"><a href="http://node-red.github.io/docs" target="_blank">Open help in new window &raquo;</a></span></h5>
+  </div>
+  <div class="modal-body">
+	<table>
+		<tr>
+		  <td><span class="help-key">?</span></td><td>Help</td>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">a</span></td><td>Select all nodes</td>
+		</tr>
+		<tr>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">Space</span></td><td>Toggle sidebar</td>
+		  <td><span class="help-key">Shift</span> <span class="help-key">Click</span></td><td>Select all connected nodes</td>
+		</tr>
+		<tr>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">z</span></td><td>Undo</td>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">Click</span></td><td>Add/remove node from selection</td>
+		</tr>
+		<tr>
+		  <td></td><td></td>
+		  <td><span class="help-key">Delete</span></td><td>Delete selected nodes or link</td>
+		</tr>
+		<tr>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">x</span></td><td>Cut selected nodes</td>
+		  <td></td><td></td>
+		</tr>
+		<tr>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">c</span></td><td>Copy selected nodes</td>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">v</span></td><td>Paste nodes</td>
+		</tr>
+		<tr>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">i</span></td><td>Import nodes</td>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">e</span></td><td>Export selected nodes</td>
+		</tr>
+		<tr>
+		  <td colspan="2"></td>
+		</tr>
+		<tr>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">+</span></td><td>Zoom in</td>
+		  <td><span class="help-key">Ctrl</span> <span class="help-key">-</span></td><td>Zoom out</td>
+		</tr>
+	</table>
+  </div>
+  <div class="modal-footer">
+	<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+  </div>
+</div>
+
+<div id="node-dialog-library-save-confirm" class="hide">
+	<form class="form-horizontal">
+		<div style="text-align: center; padding-top: 30px;">
+		 A <span id="node-dialog-library-save-type"></span> called <span id="node-dialog-library-save-name"></span> already exists. Overwrite?
+		</div>
+	</form>
+</div>
+
+<div id="node-dialog-library-save" class="hide">
+	<form class="form-horizontal">
+		<div class="form-row">
+			<label for="node-dialog-library-save-folder"><i class="icon-folder-open"></i> Folder</label>
+			<input type="text" id="node-dialog-library-save-folder" placeholder="Folder">
+		</div>
+		<div class="form-row">
+			<label for="node-dialog-library-save-filename"><i class="icon-file"></i> Filename</label>
+			<input type="text" id="node-dialog-library-save-filename" placeholder="Filename">
+		</div>
+	</form>
+</div>
+
+<div id="node-dialog-library-lookup" class="hide">
+	<form class="form-horizontal">
+		<div class="form-row">
+			<ul id="node-dialog-library-breadcrumbs" class="breadcrumb">
+				<li class="active"><a href="#">Library</a></li>
+			</ul>
+		</div>
+		<div class="form-row">
+			<div style="vertical-align: top; display: inline-block; height: 100%; width: 30%; padding-right: 20px;">
+				<div id="node-select-library" style="border: 1px solid #999; width: 100%; height: 100%; overflow:scroll;"><ul></ul></div>
+			</div>
+			<div style="vertical-align: top; display: inline-block;width: 65%; height: 100%;">
+				<div style="height: 100%; width: 95%;" class="node-text-editor" id="node-select-library-text" ></div>
+			</div>
+		</div>
+	</form>
+</div>
+<div id="node-dialog-rename-workspace" class="hide">
+	<form class="form-horizontal">
+		<div class="form-row">
+			<label for="node-input-workspace-name" ><i class="icon-tag"></i> Name:</label>
+			<input type="text" id="node-input-workspace-name">
+		</div>
+	</form>
+</div>
+<div id="node-dialog-delete-workspace" class="hide">
+	<form class="form-horizontal">
+		<div style="text-align: center; padding-top: 30px;">
+		 Are you sure you want to delete '<span id="node-dialog-delete-workspace-name"></span>'?
+		</div>
+	</form>
+</div>
+
+<script type="text/x-red" data-template-name="export-clipboard-dialog">
+	<div class="form-row">
+		<label for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i> Flow Spec:</label>
+		<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-export" rows="12"></textarea>
+	</div>
+	<div class="form-tips">
+		Select the text above and copy to the clipboard with Ctrl-A Ctrl-C.
+	</div>
+</script>
+<script type="text/x-red" data-template-name="export-library-dialog">
+	<div class="form-row">
+		<label for="node-input-filename" ><i class="icon-tag"></i> Filename:</label>
+		<input type="text" id="node-input-filename" placeholder="Filename">
+	</div>
+</script>
+<script type="text/x-red" data-template-name="import-dialog">
+	<div class="form-row">
+		<label for="node-input-import"><i class="icon-share"></i>Nodes:</label>
+		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-import" rows="5" placeholder="Paste nodes here, or lookup in the library. When importing code, the whole flow will be replaced."></textarea>
+	</div>
+	<div class="form-tips">
+		<label for="node-input-arduino" style="font-size: 13px; padding: 2px 0px 0px 4px;">
+			<input style="margin-bottom: 4px; margin-right: 4px;" type="checkbox" id="node-input-arduino" class="input-block-level" />
+				&nbsp;Import copied code from the IDE
+		</label>
+	</div>
+</script>
+
+<script src="jquery/js/jquery-1.9.1.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="jquery/js/jquery-ui-1.10.3.custom.min.js"></script>
+<script src="jquery/js/jquery.ui.touch-punch.min.js"></script>
+<script src="orion/built-editor.min.js"></script>
+<script src="red/d3/d3.v3.min.js"></script>
+<script src="red/main.js"></script>
+<script src="red/ui/state.js"></script>
+<script src="red/nodes.js"></script>
+<script src="red/storage.js"></script>
+<script src="red/history.js"></script>
+<script src="red/ui/keyboard.js"></script>
+<script src="red/ui/tabs.js"></script>
+<script src="red/ui/view.js"></script>
+<script src="red/ui/sidebar.js"></script>
+<script src="red/ui/palette.js"></script>
+<script src="red/ui/tab-info.js"></script>
+<script src="red/ui/tab-config.js"></script>
+<script src="red/ui/editor.js"></script>
+<script src="red/ui/library.js"></script>
+<script src="red/ui/notifications.js"></script>
+<script src="red/ui/touch/radialMenu.js"></script>
+
+<!--
+ TODO: generate some or all of this automatically from the C++ source
+-->
+
+<!--
+ TODO: add a field for maximum instance count
+-->
+<!--
+ TODO: add a field for exclusive to other objects (not allowed if they're used)
+-->
+<!--
+ TODO: add "parameters" fields, to replace the form html stuff
+-->
+
+<script  type="text/x-red" data-container-name="NodeDefinitions">
+	{"nodes":[
+		{"type":"DoorSensor","data":{"defaults":{"name":{"value":"new"},"door_ids":{"value":"new"},"door_state":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"door","inputs":0,"outputs":1,"category":"trigger-function","color":"LightBlue","icon":"arrow-in.png"}},
+		{"type":"MotionSensor","data":{"defaults":{"name":{"value":"new"},"sensor_ids":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"motion","inputs":0,"outputs":1,"category":"trigger-function","color":"LightBlue","icon":"arrow-in.png"}},
+		
+		{"type":"ArmState","data":{"defaults":{"name":{"value":"new"},"armstate":{"value":"disarmed armed armaway"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"armstate","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Calculate","data":{"defaults":{"name":{"value":"new"},"formula":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"calculate","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"CheckCondition","data":{"defaults":{"name":{"value":"new"},"condition":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"check_condition","inputs":1,"outputs":2,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Data","data":{"defaults":{"name":{"value":"new"},"payload":{"value":"{}"},"props":{"value":"{}"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"data","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Debug","data":{"defaults":{"name":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"debug","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Delay","data":{"defaults":{"name":{"value":"new"},"delay":{"value":"new"},"timer_id":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"delay","inputs":2,"outputs":2,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"DeleteFact","data":{"defaults":{"name":{"value":"new"},"key":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"deletefact","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Disable","data":{"defaults":{"name":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"disable","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Error","data":{"defaults":{"name":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"error","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"GenerateNotification","data":{"defaults":{"name":{"value":"new"},"notification_message":{"value":"new"},"notification_title":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"generate_notification","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"GetFact","data":{"defaults":{"name":{"value":"new"},"key":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"getfact","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Http","data":{"defaults":{"name":{"value":"new"},"endpoint":{"value":"new"},"method":{"value":"new"},"headers":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"http","inputs":1,"outputs":2,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Limit","data":{"defaults":{"name":{"value":"new"},"limit":{"value":"new"},"interval":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"limit","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"LookupContacts","data":{"defaults":{"name":{"value":"new"},"email":{"value":"{}"},"phone":{"value":"{}"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"lookup_contacts","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Nop","data":{"defaults":{"name":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"nop","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Repeat","data":{"defaults":{"name":{"value":"new"},"iterations":{"value":"new"},"interval":{"value":"new"},"timer_id":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"repeat","inputs":2,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Reset","data":{"defaults":{"name":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"reset","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Schedule","data":{"defaults":{"name":{"value":"new"},"schedule":{"value":"new"},"payload":{"value":"{}"},"props":{"value":"{}"},"recurrent":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"schedule","inputs":0,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"SetFact","data":{"defaults":{"name":{"value":"new"},"key":{"value":"new"},"value":{"value":"{}"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"setfact","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Time","data":{"defaults":{"name":{"value":"new"},"start":{"value":"new"},"end":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"time","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		{"type":"Transform","data":{"defaults":{"name":{"value":"new"},"transform":{"value":"{}"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"transform","inputs":1,"outputs":1,"category":"condition-function","color":"LightGreen","icon":"arrow-in.png"}},
+		
+		{"type":"Light","data":{"defaults":{"name":{"value":"new"},"light_ids":{"value":"new"},"light_state":{"value":"new"},"dim_level":{"value":"new"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"light","inputs":1,"outputs":1,"category":"action-function","color":"LightPink","icon":"arrow-in.png"}},
+		{"type":"Notify","data":{"defaults":{"name":{"value":"new"},"protocol":{"value":"email sms push x1 mms"},"ed":{"value":"yes"},"reset":{"value":"yes"},"debug":{"value":"yes"},"errors":{"value":"no"}},"shortName":"notify","inputs":1,"outputs":2,"category":"action-function","color":"LightPink","icon":"arrow-in.png"}}
+	]}
+</script>
+
+<script type="text/x-red" data-help-name="ArmState">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>In message will be forwarded unchanged on out channel if arm state is one of the states listed in the armstate parameter.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">armstate</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/armstate.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>armstate</td></tr>
+	<tr><td><b>type</b></td><td>[]string</td></tr>
+	<tr><td><b>doc</b></td><td>xhome arm state</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td>[disarmed armed armaway]</td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="ArmState">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-armstate"><i class="fa fa-tag"></i> ArmState</label>
+		<input type="text" id="node-input-armstate" placeholder="ArmState">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Calculate">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Performs arbitrary calculation on message payload or message properties. Calculation should be provided as formula parameter in JavaScript syntax. Example: props.dim_level = 10*(props.iteration+1)</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">calculate</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/calculate.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>formula</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>formula as evaluable JavaScript string; references to payload and or props are alowed</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Calculate">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-formula"><i class="fa fa-tag"></i> Formula</label>
+		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-formula" rows="12"></textarea>
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="CheckCondition">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Checks an arbitrary boolean Javascript expression and forwards the in message on the out channel if the expression evaluates to true, otherwise the message will forwarded on the else channel. If no component is connected to the else channel, the message will be dropped.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">check_condition</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="83" y2="83" stroke="black" stroke-width="3"/>
+	<text x="465" y="87" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	<line x1="425" x2="445" y1="116" y2="116" stroke="black" stroke-width="3"/>
+	<text x="465" y="120" font-family="Courier" font-weight="bold" font-size="18">else</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/check_condition.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] [else] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>condition</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>condition as evaluable JavaScript string; references to payload and or props are alowed</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="CheckCondition">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-condition"><i class="fa fa-tag"></i> Condition</label>
+		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-condition" rows="12"></textarea>
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Data">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Join data parameter with in message and forward on out channel. Choose whether to merge with message payload or message props based on boolean parameters.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">data</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/data.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>payload</td></tr>
+	<tr><td><b>type</b></td><td>object</td></tr>
+	<tr><td><b>doc</b></td><td>data to add to payload of message</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>props</td></tr>
+	<tr><td><b>type</b></td><td>object</td></tr>
+	<tr><td><b>doc</b></td><td>data to add to props of message</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Data">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-payload"><i class="fa fa-tag"></i> Payload</label>
+		<input type="text" id="node-input-payload" placeholder="{}">
+		<label for="node-input-props"><i class="fa fa-tag"></i> Props</label>
+		<input type="text" id="node-input-props" placeholder="{}">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Debug">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Writes debug logs even when debugging is otherwise turned off. Forwards in message on out channel unchanged.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">debug</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/debug.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td></td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Debug">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Delay">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Forward message received on activate channel immediately on the init channel, and, after delay time has passed also on the out channel, unless a message arrives on the cancel channel in the meantime. Delay should be given in simplified cron syntax, for example, 1s or 1h. timer_id, if provided, is used as ID for the internal timer ID, example: payload.meta.id</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">delay</text>
+	<line x1="150" x2="130" y1="83" y2="83" stroke="black" stroke-width="3"/>
+	<text x="35" y="87" font-family="Courier" font-weight="bold" font-size="18">activate</text>
+	<line x1="150" x2="130" y1="116" y2="116" stroke="black" stroke-width="3"/>
+	<text x="35" y="120" font-family="Courier" font-weight="bold" font-size="18">cancel</text>
+	<line x1="425" x2="445" y1="83" y2="83" stroke="black" stroke-width="3"/>
+	<text x="465" y="87" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	<line x1="425" x2="445" y1="116" y2="116" stroke="black" stroke-width="3"/>
+	<text x="465" y="120" font-family="Courier" font-weight="bold" font-size="18">init</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/delay.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[activate] [cancel] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] [init] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>delay</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>time string for delay, for example 1s or 1h</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>timer_id</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>optional hint for timer id, for example payload.meta.id</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Delay">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-delay"><i class="fa fa-tag"></i> Delay</label>
+		<input type="text" id="node-input-delay" placeholder="Delay">
+		<label for="node-input-timer_id"><i class="fa fa-tag"></i> Timer_id</label>
+		<input type="text" id="node-input-timer_id" placeholder="Timer_id">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="DeleteFact">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Delete a fact from the local in-memory fact store and forward the in message on the out channel.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">deletefact</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/deletefact.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>key</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>key of crew fact to delete</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="DeleteFact">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-key"><i class="fa fa-tag"></i> Key</label>
+		<input type="text" id="node-input-key" placeholder="Key">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Disable">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>A component that sends a disable signal to all components in the flow.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">disable</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/disable.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td></td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Disable">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="DoorSensor">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Listens for external door events. When a door event is spotted it will be wrapped in a flow message envelope and forwarded on the out channel. The door_ids parameter can be configured to listen for a specific door, a set of specific doors or any door. Similarly the door_state parameter can be used to limit listening to specific door states such as open or closed.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">door</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/door.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>trigger</td></tr>
+	<tr><td><b>inputs</b></td><td></td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>door_ids</td></tr>
+	<tr><td><b>type</b></td><td>[]string</td></tr>
+	<tr><td><b>doc</b></td><td>zero, one or more door IDs</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>door_state</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>door state</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td>[open closed]</td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="DoorSensor">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-door_ids"><i class="fa fa-tag"></i> Door_ids</label>
+		<input type="text" id="node-input-door_ids" placeholder="Door_ids">
+		<label for="node-input-door_state"><i class="fa fa-tag"></i> Door_state</label>
+		<input type="text" id="node-input-door_state" placeholder="Door_state">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Error">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Handle errors - for now we are just logging them.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">error</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/error.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td></td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Error">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="GenerateNotification">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Generates an arbitrary notification message and title string based on parameters collected from the in message and injects them into the props section of the message before forwarding on the out channel.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">generate_notification</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/generate_notification.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>notification_message</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>notification string, references to payload and props using moustache notation allowed</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>notification_title</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>title string, references to payload and props using moustache notation allowed</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="GenerateNotification">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-notification_message"><i class="fa fa-tag"></i> Notification_message</label>
+		<input type="text" id="node-input-notification_message" placeholder="Notification_message">
+		<label for="node-input-notification_title"><i class="fa fa-tag"></i> Notification_title</label>
+		<input type="text" id="node-input-notification_title" placeholder="Notification_title">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="GetFact">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Get a fact from the local in-memory fact store and forward it on the out channel. The fact will be added by key to the props section of the message.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">getfact</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/getfact.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>key</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>key for crew fact store</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="GetFact">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-key"><i class="fa fa-tag"></i> Key</label>
+		<input type="text" id="node-input-key" placeholder="Key">
+		<label for="node-input-param2"><i class="fa fa-tag"></i> param2</label>
+		<input type="text" id="node-input-param2" placeholder="Value">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Http">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Performs arbitrary http request triggered by in message. Response body, status and status code are added to the message props before forwarding on out channel. If the request results in error, the message is emiited on the error channel rather than the out channel.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">http</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="83" y2="83" stroke="black" stroke-width="3"/>
+	<text x="465" y="87" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	<line x1="425" x2="445" y1="116" y2="116" stroke="black" stroke-width="3"/>
+	<text x="465" y="120" font-family="Courier" font-weight="bold" font-size="18">error</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/http.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] [error] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>endpoint</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>http endpoint</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>method</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>http method</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td>[post get]</td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>headers</td></tr>
+	<tr><td><b>type</b></td><td>map</td></tr>
+	<tr><td><b>doc</b></td><td>http headers as key value pairs</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>yes</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Http">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-endpoint"><i class="fa fa-tag"></i> Endpoint</label>
+		<input type="text" id="node-input-endpoint" placeholder="Endpoint">
+		<label for="node-input-method"><i class="fa fa-tag"></i> Method</label>
+		<input type="text" id="node-input-method" placeholder="Method">
+		<label for="node-input-headers"><i class="fa fa-tag"></i> Headers</label>
+		<input type="text" id="node-input-headers" placeholder="Headers">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Light">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Turns one or more lights on or off.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">light</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/light.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>action</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>light_ids</td></tr>
+	<tr><td><b>type</b></td><td>[]string</td></tr>
+	<tr><td><b>doc</b></td><td>zero, one or more light IDs</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>light_state</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td></td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td>[open closed]</td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>dim_level</td></tr>
+	<tr><td><b>type</b></td><td>number</td></tr>
+	<tr><td><b>doc</b></td><td>dim level as a percentage between 0 and 100</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Light">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-light_ids"><i class="fa fa-tag"></i> Light_ids</label>
+		<input type="text" id="node-input-light_ids" placeholder="Light_ids">
+		<label for="node-input-light_state"><i class="fa fa-tag"></i> Light_state</label>
+		<input type="text" id="node-input-light_state" placeholder="Light_state">
+		<label for="node-input-dim_level"><i class="fa fa-tag"></i> Dim_level</label>
+		<input type="text" id="node-input-dim_level" placeholder="Dim_level">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Limit">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>In message will be passed to out channel, but no more than limit times per interval.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">limit</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/limit.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>limit</td></tr>
+	<tr><td><b>type</b></td><td>number</td></tr>
+	<tr><td><b>doc</b></td><td></td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>interval</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td></td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Limit">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-limit"><i class="fa fa-tag"></i> Limit</label>
+		<input type="text" id="node-input-limit" placeholder="Limit">
+		<label for="node-input-interval"><i class="fa fa-tag"></i> Interval</label>
+		<input type="text" id="node-input-interval" placeholder="Interval">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="LookupContacts">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Lookup contact info via profile service (email, phone) etc. for current location and inject it into the props section of the message before forwarding on out channel. Contact info can be provided as component parameters for testing.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">lookup_contacts</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/lookup_contacts.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>email</td></tr>
+	<tr><td><b>type</b></td><td>[]object</td></tr>
+	<tr><td><b>doc</b></td><td>email contacts in NAE format</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>phone</td></tr>
+	<tr><td><b>type</b></td><td>[]object</td></tr>
+	<tr><td><b>doc</b></td><td>phone contacts in NAE format</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="LookupContacts">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-email"><i class="fa fa-tag"></i> Email</label>
+		<input type="text" id="node-input-email" placeholder="Email">
+		<label for="node-input-phone"><i class="fa fa-tag"></i> Phone</label>
+		<input type="text" id="node-input-phone" placeholder="Phone">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="MotionSensor">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Listens for external motion events. When a motion event is spotted it will be sent on the out channel. The sensor_ids parameter can be configured to listen for a specific sensor, a set of sensors or any sensor.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">motion</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/motion.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>trigger</td></tr>
+	<tr><td><b>inputs</b></td><td></td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>sensor_ids</td></tr>
+	<tr><td><b>type</b></td><td>[]string</td></tr>
+	<tr><td><b>doc</b></td><td>zero, one or more sensor IDs</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="MotionSensor">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-sensor_ids"><i class="fa fa-tag"></i> Sensor_ids</label>
+		<input type="text" id="node-input-sensor_ids" placeholder="Sensor_ids">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Nop">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>A component that forwards the incoming message as is and does nothing else.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">nop</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/nop.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td></td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Nop">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Notify">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Sends a notification request to NAE. Valid values for the protocol parameter are sms, email, x1 or push. The message props section must contain valid contacts and notification objects.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">notify</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="83" y2="83" stroke="black" stroke-width="3"/>
+	<text x="465" y="87" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	<line x1="425" x2="445" y1="116" y2="116" stroke="black" stroke-width="3"/>
+	<text x="465" y="120" font-family="Courier" font-weight="bold" font-size="18">error</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/notify.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>action</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] [error] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>protocol</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>notification protocol to be used by NAE</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td>[email sms push x1 mms]</td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>yes</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Notify">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-protocol"><i class="fa fa-tag"></i> Protocol</label>
+		<input type="text" id="node-input-protocol" placeholder="Protocol">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Repeat">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>The activate message will be passed to the out channel iterations times with a delay interval, unless an (arbitrary) message is received on the cancel channel. timer_id, if provided, is used as ID for the internal timer ID, example: payload.meta.id</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">repeat</text>
+	<line x1="150" x2="130" y1="83" y2="83" stroke="black" stroke-width="3"/>
+	<text x="35" y="87" font-family="Courier" font-weight="bold" font-size="18">activate</text>
+	<line x1="150" x2="130" y1="116" y2="116" stroke="black" stroke-width="3"/>
+	<text x="35" y="120" font-family="Courier" font-weight="bold" font-size="18">cancel</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/repeat.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[activate] [cancel] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>iterations</td></tr>
+	<tr><td><b>type</b></td><td>number</td></tr>
+	<tr><td><b>doc</b></td><td>number of iterations</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>interval</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>pause between interations, for example 1s, 1h</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>timer_id</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>hint for choice of timer id, for example payload.meta.id</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Repeat">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-iterations"><i class="fa fa-tag"></i> Iterations</label>
+		<input type="text" id="node-input-iterations" placeholder="Iterations">
+		<label for="node-input-interval"><i class="fa fa-tag"></i> Interval</label>
+		<input type="text" id="node-input-interval" placeholder="Interval">
+		<label for="node-input-timer_id"><i class="fa fa-tag"></i> Timer_id</label>
+		<input type="text" id="node-input-timer_id" placeholder="Timer_id">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Reset">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>A component that sends a reset signal to all components in the flow.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">reset</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/reset.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td></td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Reset">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Schedule">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>One time or recurring schedule using our usual mix of cron and go syntax. At the scheduled time the message defined in parameters will be emitted on the out channel. The message can be blank.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">schedule</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/schedule.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td></td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>schedule</td></tr>
+	<tr><td><b>type</b></td><td>schedule</td></tr>
+	<tr><td><b>doc</b></td><td>schedule when to emit message</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>payload</td></tr>
+	<tr><td><b>type</b></td><td>object</td></tr>
+	<tr><td><b>doc</b></td><td>message to emit at schedule</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>props</td></tr>
+	<tr><td><b>type</b></td><td>object</td></tr>
+	<tr><td><b>doc</b></td><td>message to emit at schedule</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>recurrent</td></tr>
+	<tr><td><b>type</b></td><td>bool</td></tr>
+	<tr><td><b>doc</b></td><td>if true, repeat schedule at defined interval</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Schedule">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-schedule"><i class="fa fa-tag"></i> Schedule</label>
+		<input type="text" id="node-input-schedule" placeholder="Schedule">
+		<label for="node-input-payload"><i class="fa fa-tag"></i> Payload</label>
+		<input type="text" id="node-input-payload" placeholder="Payload">
+		<label for="node-input-props"><i class="fa fa-tag"></i> Props</label>
+		<input type="text" id="node-input-props" placeholder="Props">
+		<label for="node-input-recurrent"><i class="fa fa-tag"></i> Recurrent</label>
+		<input type="text" id="node-input-recurrent" placeholder="Recurrent">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="SetFact">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Set a fact in the local in-memory fact store and forward the in message on the out channel.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">setfact</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/setfact.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>key</td></tr>
+	<tr><td><b>type</b></td><td>string</td></tr>
+	<tr><td><b>doc</b></td><td>key of crew fact</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>value</td></tr>
+	<tr><td><b>type</b></td><td>object</td></tr>
+	<tr><td><b>doc</b></td><td>value of crew fact</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>no</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="SetFact">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-key"><i class="fa fa-tag"></i> Key</label>
+		<input type="text" id="node-input-key" placeholder="key">
+		<label for="node-input-value"><i class="fa fa-tag"></i> Value</label>
+		<input type="text" id="node-input-value" placeholder="{}">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Time">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>If current time matches configured time frame, in message will be passed to out channel unharmed, otherwise in message will be dropped.</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">time</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/time.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>start</td></tr>
+	<tr><td><b>type</b></td><td>time</td></tr>
+	<tr><td><b>doc</b></td><td>start time of legal time frame</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	<table>
+	<tr><td><b>name</b></td><td>end</td></tr>
+	<tr><td><b>type</b></td><td>time</td></tr>
+	<tr><td><b>doc</b></td><td>end time of legal time frame</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Time">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-start"><i class="fa fa-tag"></i> Start</label>
+		<input type="text" id="node-input-start" placeholder="Start">
+		<label for="node-input-end"><i class="fa fa-tag"></i> End</label>
+		<input type="text" id="node-input-end" placeholder="End">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+ <script type="text/x-red" data-help-name="Transform">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	
+	<table>
+	<tr><td><b></b></td><td>Allows arbitrary transformation of in message before passing to out channel (basically EEL as a component).</td></tr>
+	</table>
+	</div>
+	
+	<table>
+	<tr><td><b></b></td><td>
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" version="1.1">
+	<rect x="150" y="50" rx="10" ry="10" width="275" height="100" style="fill:green;stroke:black;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.7"/>
+	<text x="180" y="106" font-family="Courier" font-weight="bold" font-size="18">transform</text>
+	<line x1="150" x2="130" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="35" y="104" font-family="Courier" font-weight="bold" font-size="18">in</text>
+	<line x1="425" x2="445" y1="100" y2="100" stroke="black" stroke-width="3"/>
+	<text x="465" y="104" font-family="Courier" font-weight="bold" font-size="18">out</text>
+	
+	</svg>
+	</td></tr>
+	<tr><td><b></b></td><td><a href="sheens/transform.yaml">sheen source</a></td></tr>
+	<tr><td><b>type</b></td><td>condition</td></tr>
+	<tr><td><b>inputs</b></td><td>[in] </td></tr>
+	<tr><td><b>outputs</b></td><td>[out] </td></tr>
+	<tr><td><b>parameters</b></td><td><table>
+	<tr><td><b>name</b></td><td>transformation</td></tr>
+	<tr><td><b>type</b></td><td>object</td></tr>
+	<tr><td><b>doc</b></td><td>eel style transformation for payload or props</td></tr>
+	<tr><td><b>default</b></td><td></td></tr>
+	<tr><td><b>required</b></td><td>yes</td></tr>
+	<tr><td><b>valid values</b></td><td></td></tr>
+	</table>
+	</td></tr>
+	<tr><td><b>enable/disable</b></td><td>yes</td></tr>
+	<tr><td><b>reset</b></td><td>yes</td></tr>
+	<tr><td><b>debug</b></td><td>yes</td></tr>
+	<tr><td><b>errors</b></td><td>no</td></tr>
+	</table>
+ </script>
+ <script type="text/x-red" data-template-name="Transform">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+		<label for="node-input-transformation"><i class="fa fa-tag"></i> Transformation</label>
+		<input type="text" id="node-input-transformation" placeholder="{}">
+		<label for="node-input-ed"><i class="fa fa-tag"></i> Enable/Disable</label>
+		<input type="text" id="node-input-ed" placeholder="Enable/Disable">
+		<label for="node-input-reset"><i class="fa fa-tag"></i> Reset</label>
+		<input type="text" id="node-input-reset" placeholder="Reset">
+		<label for="node-input-debug"><i class="fa fa-tag"></i> Debug</label>
+		<input type="text" id="node-input-debug" placeholder="Debug">
+		<label for="node-input-errors"><i class="fa fa-tag"></i> Errors</label>
+		<input type="text" id="node-input-errors" placeholder="Errors">
+	</div>
+ </script>
+
+</body>
+</html>

@@ -1,0 +1,350 @@
+name: delay
+doc: |-
+  Forward message received on activate channel on out channel after delay time has passed, unless a
+  message arrives on the cancel channel in the meantime. Delay should be given in simplified cron
+  syntax, for example, 1s or 1h.
+paramspecs:
+  template:
+    doc: car/cru template placeholder
+    primitiveType: objects
+    required: false
+  delay:
+    doc: delay
+    primitiveType: string
+    required: true
+  timer_id:
+    doc: what part of the payload could be used as timer id, for example msg_id, or payload.meta.id
+    primitiveType: string
+    required: true
+  debug:
+    doc: debug flag
+    primitiveType: bool
+    default: true
+    required: true
+  funcional_type:
+    doc: functional type of this component
+    primitiveType: string
+    required: true
+    default: "condition"
+  flow_type:
+    doc: automation template id, for example notify_when_door_open
+    primitiveType: string
+    required: true
+  flow_id:
+    doc: automation instance id, for example aa7efeca-ae7c-4524-b570-af9d2e6ce751
+    primitiveType: string
+    required: true
+  component_type:
+    doc: component template id of this component
+    primitiveType: string
+    required: true
+  component_id:
+    doc: component instance id of this component; should use mid for this
+    primitiveType: string
+    required: true
+  out:
+    doc: out channel receives activate message when time is up
+    primitiveType: out
+    required: true
+  init:
+    doc: out channel receives activate message when delay is activated
+    primitiveType: out
+    required: true
+  activate:
+    doc: in channel to activate delay
+    primitiveType: in
+    required: true
+  cancel:
+    doc: in channel to cancel delay
+    primitiveType: in
+    required: true
+requires:
+  - spec: timers
+    id: timers
+parsepatterns: true
+patternsyntax: json
+nodes:
+  start:
+    action:
+      doc: Initialize timers map, maybe we don't need this.
+      interpreter: goja
+      source: |-
+        _.bindings.timers = {};
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  listen:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          { "message_id" : "?message_id", "payload" : "?payload", "props" : "?props", "flow_type" : "?flow_type", "flow_id" : "?flow_id", "component_type" : "?component_type", "component_id" : "?component_id", "component_out_label" : "?component_out_label", "component_in_label" : "activate", "path_id" : "?path_id" }
+        target: activate
+      - pattern: |
+          { "message_id" : "?message_id", "payload" : "?payload", "props" : "?props", "flow_type" : "?flow_type", "flow_id" : "?flow_id", "component_type" : "?component_type", "component_id" : "?component_id", "component_out_label" : "?component_out_label", "component_in_label" : "cancel", "path_id" : "?path_id" }
+        target: cancel
+      - pattern: |
+          { "message_id" : "?message_id", "payload" : "?payload", "props" : "?props", "flow_type" : "?flow_type", "flow_id" : "?flow_id", "component_type" : "?component_type", "component_id" : "?component_id", "path_id" : "delay" }
+        target: forward
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "disable" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "disable", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: listen_enable
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "reset" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "reset", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: reset
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "debug" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "debug", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: debug
+  activate:
+    action:
+      interpreter: goja
+      doc: Schedule timer.
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "delay_activate", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        var payload = _.bindings["?payload"];
+        var props = _.bindings["?props"];
+        var timer_id = _.props.mid
+        if (_.bindings.timer_id) {
+          timer_id = timer_id + "-" + eval(_.bindings.timer_id);
+        }
+        // reset timer if one already exists
+        if (_.bindings.timers[timer_id]) {
+          if (_.bindings.debug) {
+            _.log({ "log": "DEBUG", "action": "delay_reset_timer", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+          }
+          _.out({to: { "mid": "timers" }, deleteTimer: timer_id});
+          delete _.bindings.timers[timer_id];
+        }
+        // forward message on init channel in case anybody cares
+        if (_.bindings.init) {
+          for (var i = 0; i < _.bindings.init.target_mids.length; i++) {
+            // add flow meta data
+            var msg = {
+              "to" : { "mid": _.bindings.init.target_mids[i] },
+              "component_out_label" : "init"
+              "component_in_label" : _.bindings.out.component_in_labels[i],
+              "payload" : payload,
+              "props" : props,
+              "timestamp" : Date.now(),
+              "message_id" : _.bindings["?message_id"],
+              "flow_type" : _.bindings.flow_type,
+              "flow_id" : _.bindings.flow_id,
+              "component_type" : "delay",
+              "component_id" : _.props.mid,
+              "path_id" : _.bindings.init.path_id
+            };
+            // forward message
+            _.out(msg);
+          }
+        }
+        // create timer
+        _.bindings.timers[timer_id] = timer_id;
+        props.delay = _.bindings.delay;
+        var message = {
+          "to" : { "mid": _.props.mid },
+          "message_id": _.bindings["?message_id"],
+          "payload": payload,
+          "props": props,
+          "flow_type" : _.bindings.flow_type,
+          "flow_id" : _.bindings.flow_id,
+          "component_type" : "delay",
+          "component_id" : _.props.mid,
+          "path_id" : "delay"
+        };
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "delay_create_timer", "timer_id" : timer_id, "delay": _.bindings.delay, "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        _.out({to: { "mid": "timers" }, makeTimer: {id: timer_id, in: _.bindings.delay, message: message}});
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  cancel:
+    action:
+      doc: Cancel the pending reminder
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "delay_cancel", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        var payload = _.bindings["?payload"];
+        var props = _.bindings["?props"];
+        var messageId = _.bindings["?message_id"];
+        var timer_id = _.props.mid
+        if (_.bindings.timer_id) {
+          timer_id = timer_id + "-" + eval(_.bindings.timer_id);
+        }
+        if (_.bindings.timers[timer_id]) {
+           _.out({to: { "mid": "timers" }, deleteTimer: timer_id});
+           delete _.bindings.timers[timer_id];
+        } else {
+          if (_.bindings.debug) {
+            _.log({ "log": "debug", "action": "delay_cancel", "info":"cancel_without_activate", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+          }
+        }
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  forward:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "forward", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        var payload = _.bindings["?payload"];
+        var props = _.bindings["?props"];
+        for (var i = 0; i < _.bindings.out.target_mids.length; i++) {
+          // add flow meta data
+          var msg = {
+            "to" : { "mid": _.bindings.out.target_mids[i] },
+            "component_out_label" : "out"
+            "component_in_label" : _.bindings.out.component_in_labels[i],
+            "payload" : payload,
+            "props" : props,
+            "timestamp" : Date.now(),
+            "message_id" : _.bindings["?message_id"],
+            "flow_type" : _.bindings.flow_type,
+            "flow_id" : _.bindings.flow_id,
+            "component_type" : "delay",
+            "component_id" : _.props.mid,
+            "path_id" : _.bindings.out.path_id
+          };
+          // forward message
+          _.out(msg);
+        }
+        // cleanup
+        var timer_id = _.props.mid
+        if (_.bindings.timer_id) {
+          timer_id = timer_id + "-" + eval(_.bindings.timer_id);
+        }
+        if (_.bindings.timers[timer_id]) {
+          delete _.bindings.timers[timer_id];
+        }
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  listen_enable:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "enable" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "enable", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: listen
+  reset:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "reset", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        // delete all state information in bindings but retain initial bindings
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        // if other cleanup is necessary (timers, facts, etc.) do it here...
+        for (var timer_id in _.bindings.timers) {
+          if (_.bindings.timers.hasOwnProperty(timer_id)) {
+             _.out({to: { "mid": "timers" }, deleteTimer: timer_id});
+             delete _.bindings.timers[timer_id];
+            if (_.bindings.debug) {
+              _.log({ "log": "DEBUG", "action": "delete_timer", "timer_id": timer_id,"flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+            }
+          }
+        }
+        return _.bindings;
+    branching:
+      branches:
+      - target: start
+  debug:
+    action:
+      interpreter: goja
+      source: |-
+        _.bindings.debug = !_.bindings.debug;
+        _.log({ "log": "DEBUG", "action": "debug", "info": _.bindings.debug, "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen

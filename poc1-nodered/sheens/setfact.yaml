@@ -1,0 +1,213 @@
+name: setfact
+doc: |-
+  Set a fact in the local in-memory fact store and forward the in message on the out channel.
+paramspecs:
+  template:
+    doc: car/cru template placeholder
+    primitiveType: objects
+    required: false
+  key:
+    doc: fact key
+    primitiveType: string
+    required: true
+  value:
+    doc: fact value
+    primitiveType: string
+    required: true
+  debug:
+    doc: debug flag
+    primitiveType: bool
+    default: true
+    required: true
+  funcional_type:
+    doc: functional type of this component
+    primitiveType: string
+    required: true
+    default: "condition"
+  flow_type:
+    doc: automation template id, for example notify_when_door_open
+    primitiveType: string
+    required: true
+  flow_id:
+    doc: automation instance id, for example aa7efeca-ae7c-4524-b570-af9d2e6ce751
+    primitiveType: string
+    required: true
+  component_type:
+    doc: component template id of this component
+    primitiveType: string
+    required: true
+  component_id:
+    doc: component instance id of this component; should use mid for this
+    primitiveType: string
+    required: true
+  in:
+    doc: in channel description
+    primitiveType: in
+    required: true
+  out:
+    doc: out channel description
+    primitiveType: out
+    required: true
+parsepatterns: true
+patternsyntax: json
+nodes:
+  start:
+    branching:
+      branches:
+      - target: listen
+  listen:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          { "message_id" : "?message_id", "payload" : "?payload", "props" : "?props", "flow_type" : "?flow_type", "flow_id" : "?flow_id", "component_type" : "?component_type", "component_id" : "?component_id", "component_out_label" : "?component_out_label", "component_in_label" : "?component_in_label", "path_id" : "?path_id" }
+        target: in
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "disable" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "disable", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: listen_enable
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "reset" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "reset", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: reset
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "debug" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "debug", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: debug
+  in:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "setfact", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        var payload = _.bindings["?payload"];
+        var props = _.bindings["?props"];
+        // set fact
+        var fact = {};
+        fact.fact = "set";
+        fact.to = { "mid" : "facts" };
+        try {
+          fact.fkey = eval(_.bindings.key);
+          fact.fkey = _.bindings.flow_id + "-" + fact.fkey;
+        } catch (e) {
+          fact.fkey = _.bindings.flow_id + "-" + _.bindings.key;
+        }
+        try {
+          fact.fvalue = eval(_.bindings.value);
+        } catch (e) {
+          fact.fvalue = _.bindings.value;
+        }
+        _.out(fact);
+        // forward payload unchanged
+        for (var i = 0; i < _.bindings.out.target_mids.length; i++) {
+          // add flow meta data
+          var msg = {
+            "to" : { "mid": _.bindings.out.target_mids[i] },
+            "component_out_label" : "out"
+            "component_in_label" : _.bindings.out.component_in_labels[i],
+            "payload" : payload,
+            "props" : props,
+            "timestamp" : Date.now(),
+            "message_id" : _.bindings["?message_id"],
+            "flow_type" : _.bindings.flow_type,
+            "flow_id" : _.bindings.flow_id ,
+            "component_type" : "setfact",
+            "component_id" : _.props.mid,
+            "path_id" : _.bindings.out.path_id
+          };
+          // forward message
+          _.out(msg);
+        }
+        // cleanup
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
+  listen_enable:
+    branching:
+      type: message
+      branches:
+      - pattern: |
+          { "flow_id" : "?flow_id", "action" : "enable" }
+        guard:
+          interpreter: goja
+          source: |-
+            if (_.bindings.flow_id === _.bindings["?flow_id"]) {
+              if (_.bindings.debug) {
+                _.log({ "log": "DEBUG", "action": "enable", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+              }
+              return _.bindings;
+            }
+            return null;
+        target: listen
+  reset:
+    action:
+      interpreter: goja
+      source: |-
+        if (_.bindings.debug) {
+          _.log({ "log": "DEBUG", "action": "reset", "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        }
+        // delete all state information in bindings but retain initial bindings
+        delete _.bindings["?message_id"];
+        delete _.bindings["?flow_type"];
+        delete _.bindings["?flow_id"];
+        delete _.bindings["?component_type"];
+        delete _.bindings["?component_id"];
+        delete _.bindings["?component_in_label"];
+        delete _.bindings["?component_out_label"];
+        delete _.bindings["?path_id"];
+        delete _.bindings["?payload"];
+        delete _.bindings["?props"];
+        // if other cleanup is necessary (timers, facts, etc.) do it here...
+        return _.bindings;
+    branching:
+      branches:
+      - target: start
+  debug:
+    action:
+      interpreter: goja
+      source: |-
+        _.bindings.debug = !_.bindings.debug;
+        _.log({ "log": "DEBUG", "action": "debug", "info": _.bindings.debug, "flow_type": _.bindings.flow_type, "flow_id": _.bindings.flow_id, "component_type": _.bindings.component_type, "component_id":  _.bindings.component_id});
+        return _.bindings;
+    branching:
+      branches:
+      - target: listen
