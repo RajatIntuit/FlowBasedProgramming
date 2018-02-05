@@ -101,10 +101,10 @@ Sidebar components will get populated based on https://s3-us-west-2.amazonaws.co
 ```
 
 ## Snapshots
-![POC1 snapshot](https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc1_nodered_flow.png)
+![POC1 snapshot](https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc1_nodered_flow.png)
 
 ## Flow JSON
-https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc1_nodered_flow.json
+https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc1_nodered_flow.json
 
 ----
 # POC 2 - TotalJS
@@ -161,12 +161,12 @@ exports.html =
 ## Snapshots
 More Demos at https://www.totaljs.com/flowboard/
 
-![POC2 snapshot](https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc2_totaljs_flow.png)
-![POC2 snapshot](https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc2_totaljs_homedesigner.png)
-![POC2 snapshot](https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc2_totaljs_analytics.png)
+![POC2 snapshot](https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc2_totaljs_flow.png)
+![POC2 snapshot](https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc2_totaljs_homedesigner.png)
+![POC2 snapshot](https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc2_totaljs_analytics.png)
 
 ## Flow JSON
-https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc2_totaljs_flow.json
+https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc2_totaljs_flow.json
 
 ----
 # POC 3 - NoFlo
@@ -186,10 +186,10 @@ Detailed steps at https://noflojs.org/documentation/components/
 ```
 
 ## Snapshots
-![POC3 snapshot](https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc3_noflo_flow.png)
+![POC3 snapshot](https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc3_noflo_flow.png)
 
 ## Flow JSON
-https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc3_noflo_flow.json
+https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc3_noflo_flow.json
 
 ----
 # POC 4 - ProjectStorm
@@ -284,10 +284,10 @@ Detailed steps at https://www.npmjs.com/package/storm-react-diagrams
 ```
 
 ## Snapshots
-![POC4 snapshot](https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc4_projectstorm_flow.png)
+![POC4 snapshot](https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc4_projectstorm_flow.png)
 
 ## Flow JSON
-https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc4_projectstorm_flow.json
+https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc4_projectstorm_flow.json
 
 ----
 # POC 5 - GoJS
@@ -312,8 +312,8 @@ Only generic components can be created with multiple I/O ports
 ```
 
 ## Snapshots
-![POC5 snapshot](https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc5_gojs_flow.png)
+![POC5 snapshot](https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc5_gojs_flow.png)
 
 ## Flow JSON
-https://github.comcast.com/XfinityRulesService/gears-flows/blob/master/samples/poc5_gojs_flow.json
+https://github.com/RajatIntuit/FlowBasedProgramming/blob/master/samples/poc5_gojs_flow.json
 
